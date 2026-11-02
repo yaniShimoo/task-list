@@ -7,8 +7,21 @@ tasks = []
 counter = 1
 
 @app.get("/tasks")
-def get_tasks():
-    return tasks
+def get_tasks(priority: int | None = None):
+    if priority is None:
+        return tasks
+#
+    if not 1 <= priority <= 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Priority must be from 1 to 3"
+        )
+
+    return [
+        task
+        for task in tasks
+        if task.get("priority", 2) == priority
+    ]
 
 @app.get("/tasks/{task_id}")
 def get_task(task_id: int):
@@ -20,10 +33,17 @@ def get_task(task_id: int):
 @app.post("/tasks")
 def add_task(task: dict):
     global counter
+
+    priority = task.get("priority", 2)
+
+    if type(priority) is not int or not 1 <= priority <= 3:
+        raise HTTPException(status_code=400, detail="Priority must be an integer from 1 to 3")
+    
     new_task = {
         "id": counter,
         "title": task.get("title"),
-        "owner": task.get("owner")
+        "owner": task.get("owner"),
+        "priority": priority
     }
     tasks.append(new_task)
     counter += 1
